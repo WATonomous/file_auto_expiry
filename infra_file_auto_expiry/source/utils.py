@@ -38,7 +38,7 @@ def generate_folder(base_path, permission=700):
 
     return folder_path
 
-def is_expired_file(file_path, days_for_expire=0):
+def is_expired_file(file_path, days_for_expire=30):
     """
     Checks the last time a file has been accessed. If it has not been accessed 
     in the days specified, then return True. False if otherwise.
