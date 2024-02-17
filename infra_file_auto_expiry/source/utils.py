@@ -29,8 +29,7 @@ def generate_folder(base_path, permission=700):
     
     # modify folder settings permissions
     try:
-        print('ww')
-        #subprocess.run(["sudo", "chmod", str(permission), folder_path], check=True)
+        subprocess.run(["sudo", "chmod", str(permission), folder_path], check=True)
     except Exception as e:
         # Catch for errors, likely from non existing permission code
         print(e)
