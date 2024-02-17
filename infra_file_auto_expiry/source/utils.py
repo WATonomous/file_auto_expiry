@@ -29,7 +29,8 @@ def generate_folder(base_path, permission=700):
     
     # modify folder settings permissions
     try:
-        subprocess.run(["sudo", "chmod", str(permission), folder_path], check=True)
+        print("wa")
+        #subprocess.run(["sudo", "chmod", str(permission), folder_path], check=True)
     except Exception as e:
         # Catch for errors, likely from non existing permission code
         print(e)
@@ -38,7 +39,7 @@ def generate_folder(base_path, permission=700):
 
     return folder_path
 
-def is_expired_file(file_path, days_for_expire=30):
+def is_expired_file(file_path, days_for_expire=0):
     """
     Checks the last time a file has been accessed. If it has not been accessed 
     in the days specified, then return True. False if otherwise.
@@ -89,6 +90,9 @@ def delete_expired_files(base_folder):
 
     string base_folder: The folder containing the files to delete
     """
+    if not os.path.isdir(base_folder):
+        print("Base folder does not exist")
+        return
 
     temp_folder = generate_folder(os.path.dirname(base_folder))
     if temp_folder is None:
