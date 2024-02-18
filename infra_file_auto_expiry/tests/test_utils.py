@@ -15,19 +15,17 @@ from source.utils import *
 
 
 class TestUtils(unittest.TestCase):
-    @patch("subprocess.run")
-    def test_get_file_creator(self, patch_sub):
+    @patch("pwd.getpwuid")
+    @patch("os.stat")
+    def test_get_file_creator(self, patch_os, patch_pwd):
         """
         Tests retrieving the user name of a file owner
         """
         # Successfully retrieves file owner
-        patch_sub.return_value.stdout = "-rw-rw-r-- 1 machung machung 4 Feb 17 05:14 /home/machung/test.txt".encode()
-        patch_sub.return_value.stderr = "".encode()
-        self.assertEqual(get_file_creator("/home/machung/test.txt"), "machung")
-
-        # Error in retrieving file owner name
-        patch_sub.return_value.stderr = "error".encode()
-        self.assertEqual(get_file_creator("/home/machung/test.txt"), None)
+        patch_os.return_value.st_uid=0
+        patch_pwd.return_value.pw_name="tester_account"
+        self.assertEqual(get_file_creator("/home/machung/test.txt"), "tester_account")
+        
 
     @patch('os.stat')
     @patch('time.time')

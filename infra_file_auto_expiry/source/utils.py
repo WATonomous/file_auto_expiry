@@ -1,3 +1,4 @@
+import pwd
 import subprocess
 import shutil
 import os
@@ -29,7 +30,8 @@ def generate_folder(base_path, permission=700):
     
     # modify folder settings permissions
     try:
-        subprocess.run(["sudo", "chmod", str(permission), folder_path], check=True)
+        print("")
+        #subprocess.run(["sudo", "chmod", str(permission), folder_path], check=True)
     except Exception as e:
         # Catch for errors, likely from non existing permission code
         print(e)
@@ -59,7 +61,7 @@ def is_expired(path, days_for_expire=0):
     # compare days for expiry (in seconds) to the time since last access
     return (days_for_expire * 24 * 60 * 60) < seconds_last_access
 
-def get_file_creator(file_path):
+def get_file_creator(path):
     """
     Gets the file creators username
 
@@ -69,12 +71,18 @@ def get_file_creator(file_path):
 
     string file_path: The absolute path of the file
     """
-    sub_result = subprocess.run(["ls", "-l", file_path], capture_output=True)
-    print(sub_result.stderr)
-    if not sub_result.stderr:
-        file_owner = sub_result.stdout.decode().split()[2]
-        return file_owner
-    return None
+    try:
+        # Get the UID of the file or directory owner
+        uid = os.stat(path).st_uid
+        # Get the username associated with the UID
+        username = pwd.getpwuid(uid).pw_name
+        return username
+    except FileNotFoundError:
+        print(f"Error: File '{path}' not found.")
+        return None
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 def notify_file_creator(file_creator):
     """
@@ -82,7 +90,7 @@ def notify_file_creator(file_creator):
     """
     print(f"Deleting file by ", file_creator)
 
-def delete_expired_files(folder_path):
+def find_expired_files(folder_path):
     """
     Goes through all files in a folder, and deletes the ones that
     have expired
@@ -92,23 +100,34 @@ def delete_expired_files(folder_path):
     if not os.path.isdir(folder_path):
         print("Base folder does not exist")
         return
+    
+    with os.scandir(folder_path) as entries:
+        for entry in entries:
+            if entry.is_file() or entry.is_dir():
+                entry_path = os.path.join(folder_path, entry.name)
+                if is_expired(entry_path):
+                    entry_path_no_ext, ext = os.path.splitext(entry_path)
+                    unique_timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
+                    unique_random_key = "".join(random.choices(string.ascii_letters + string.digits, k=5))
+                    entry_path_unique = f"{entry_path_no_ext}_{unique_timestamp}_{unique_random_key}{ext}"
+                    
+                    os.rename(entry_path, entry_path_unique)
+                    yield entry_path_unique
 
+def delete_expired_files(folder_path):
+    if not os.path.isdir(folder_path):
+        print("Base folder does not exist")
+        return
+    
     temp_folder = generate_folder(os.path.dirname(folder_path))
     if temp_folder is None:
         print("Unable to create a temporary folder, cancelling file deletion")
         return
 
-    with os.scandir(folder_path) as entries:
-        for entry in entries:
-            if entry.is_file() or entry.is_dir():
-                entry_path = os.path.join(folder_path, entry.name)
-
-                entry_path_no_ext, ext = os.path.splitext(entry_path)
-                unique_timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
-                unique_random_key = "".join(random.choices(string.ascii_letters + string.digits, k=5))
-                entry_path_unique = f"{entry_path_no_ext}_{unique_timestamp}_{unique_random_key}{ext}"
-                
-                os.rename(entry_path, entry_path_unique)
-                shutil.move(entry_path_unique, temp_folder)
+    for path in find_expired_files(folder_path):
+        
+        notify_file_creator(get_file_creator(path))
+        shutil.move(path, temp_folder)
     
     shutil.rmtree(temp_folder)
+    
