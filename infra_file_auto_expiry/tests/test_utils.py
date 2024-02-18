@@ -1,9 +1,6 @@
-import pytest
 import unittest
 import os
-import time
 import sys
-import subprocess
 from unittest.mock import patch
 
 module_path = os.path.dirname(
