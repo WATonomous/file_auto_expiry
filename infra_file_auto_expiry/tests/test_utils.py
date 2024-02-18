@@ -14,7 +14,7 @@ sys.path.append(module_path)
 from source.utils import *
 
 
-class TestFileExpiry(unittest.TestCase):
+class TestUtils(unittest.TestCase):
     @patch("subprocess.run")
     def test_get_file_creator(self, patch_sub):
         """
@@ -31,7 +31,7 @@ class TestFileExpiry(unittest.TestCase):
 
     @patch('os.stat')
     @patch('time.time')
-    def test_is_expired_file(self, patch_time, patch_os):
+    def test_is_expired(self, patch_time, patch_os):
         """
         Tests the is_expired_file function
         """
@@ -41,12 +41,12 @@ class TestFileExpiry(unittest.TestCase):
         
         # Days since last access is 50 - 5 = 45 > 30
         # The file should be expired
-        self.assertTrue(is_expired_file("test_name", time_to_expire_days))
+        self.assertTrue(is_expired("test_name", time_to_expire_days))
 
         patch_time.return_value = 10 * 24 * 60 * 60 
         # Days since last access is 10 - 5 = 5 < 30
         # The file should not be expired
-        self.assertFalse(is_expired_file("test_name", time_to_expire_days))
+        self.assertFalse(is_expired("test_name", time_to_expire_days))
 
     def test_notify_file_creator(self):
         pass
