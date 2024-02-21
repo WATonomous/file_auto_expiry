@@ -85,7 +85,7 @@ def scan_folder_for_expired(folder_path, days_for_expire=30):
 
 def delete_expired_files(folder_path, temp_folder, days_for_expire=30):
     if not os.path.isdir(folder_path) or not os.path.isdir(temp_folder):
-        print("Base folder does not exist")
+        print("Base folder does not exist ")
         return
     
     for path in scan_folder_for_expired(folder_path, days_for_expire):
