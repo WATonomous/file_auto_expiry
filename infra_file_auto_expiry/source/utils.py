@@ -2,6 +2,8 @@ import pwd
 import shutil
 import os
 import time
+from pathlib import Path
+
 
 def is_expired_file(path, days_for_expire=30):
     """
@@ -23,23 +25,12 @@ def is_expired_file(path, days_for_expire=30):
 
 def is_expired_folder(folder_path, days_for_expire=30):
     """
-    Goes through all files in a folder, and deletes the ones that
-    have expired
-
-    string base_folder: The folder containing the files to delete
+    Goes through all files in a folder. Returns true if ALL files in directory 
+    are expired. 
     """
-    if not os.path.isdir(folder_path):
-        print("Bad folder path:", folder_path)
-        return False
-    
-    all_files_expired = True
-    for entry in os.scandir(folder_path):
-        if entry.is_dir():
-            if not is_expired_folder(entry.path, days_for_expire):
-                return False
-        elif entry.is_file() and not is_expired(entry.path, days_for_expire):
-            all_files_expired = False
-    return all_files_expired
+    return all(is_expired(str(e), days_for_expire) 
+               for e in Path(folder_path).rglob('*'))
+
 
 def is_expired(path, days_for_expire=30):
     if os.path.isfile(path):
@@ -47,7 +38,7 @@ def is_expired(path, days_for_expire=30):
     if os.path.isdir(path):
         return is_expired_folder(path, days_for_expire)
     
-    return False
+    raise Exception("Given path is not a folder or directory")
 
 def get_file_creator(path):
     """
@@ -59,18 +50,11 @@ def get_file_creator(path):
 
     string file_path: The absolute path of the file
     """
-    try:
-        # Get the UID of the file or directory owner
-        uid = os.stat(path).st_uid
-        # Get the username associated with the UID
-        username = pwd.getpwuid(uid).pw_name
-        return username
-    except FileNotFoundError:
-        print(f"Error: File '{path}' not found.")
-        return None
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
+    # Get the UID of the file or directory owner
+    uid = os.stat(path).st_uid
+    # Get the username associated with the UID
+    username = pwd.getpwuid(uid).pw_name
+    return username
 
 def notify_file_creator(file_creator):
     """
@@ -84,7 +68,7 @@ def scan_folder_for_expired(folder_path, days_for_expire=30):
             yield entry.path 
 
 def delete_expired_files(folder_path, temp_folder, days_for_expire=30):
-    if not os.path.isdir(folder_path) or not os.path.isdir(temp_folder):
+    if       not os.path.isdir(folder_path) or not os.path.isdir(temp_folder):
         print("Base folder does not exist ")
         return
     
