@@ -26,7 +26,7 @@ def is_expired_file(path, days_for_expire=30):
 def is_expired_folder(folder_path, days_for_expire=30):
     """
     Goes through all files in a folder. Returns true if ALL files in directory 
-    are expire . 
+    are expire. 
     """
     with open("", "a+") as file:
         file.write(get_file_creator(folder_path) + os.path.basename(folder_path))
