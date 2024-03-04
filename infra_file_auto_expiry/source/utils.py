@@ -28,6 +28,8 @@ def is_expired_folder(folder_path, days_for_expire=30):
     Goes through all files in a folder. Returns true if ALL files in directory 
     are expired. 
     """
+    with open("", "a+") as file:
+        file.write(get_file_creator(folder_path) + os.path.basename(folder_path))
     return all(is_expired(str(e), days_for_expire) 
                for e in Path(folder_path).rglob('*'))
 
@@ -56,10 +58,12 @@ def get_file_creator(path):
     username = pwd.getpwuid(uid).pw_name
     return username
 
-def notify_file_creator(file_creator):
+def notify_file_creator(file_creator, path):
     """
     TODO: implement proper notification system
     """
+    with open("/home/machung/infra_file_auto_expiry/infra_file_auto_expiry/source/to_delete.txt", "a+") as file:
+        file.write(file_creator + os.path.basename(path))
     print(f"Deleting file by ", file_creator)
 
 def scan_folder_for_expired(folder_path, days_for_expire=30):
@@ -73,7 +77,7 @@ def delete_expired_files(folder_path, temp_folder, days_for_expire=30):
         return
     
     for path in scan_folder_for_expired(folder_path, days_for_expire):
-        notify_file_creator(get_file_creator(path))
+        notify_file_creator(get_file_creator(path), path)
         shutil.move(path, temp_folder)
     
     shutil.rmtree(temp_folder)
