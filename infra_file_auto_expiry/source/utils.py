@@ -10,7 +10,7 @@ def is_expired_filepath(path, days_for_expire=30):
     Checks the last time a file or folder has been accessed. If it has not 
     been accessed in the days specified, then return True. False if otherwise.
 
-    string days: The full path to the file that is being checked
+    string path: The full path to the file that is being checked
     int days: The amount of days since last access that indicates that a file
         has expired. 
     """
@@ -25,7 +25,10 @@ def is_expired_filepath(path, days_for_expire=30):
         (days_for_expire * 24 * 60 * 60) < (current_time - file_stat.st_mtime))
 
 def is_expired_link(path, days_for_expire=30):
-    """"""
+    """
+    Checks if a symlink is expired. Checks the link itself, along with the 
+    file it points to. Returns true if both are expired. 
+    """
     if not os.path.islink(path):
         raise Exception("Given path is not a valid link.")
     
@@ -47,6 +50,9 @@ def is_expired_folder(folder_path, days_for_expire=30):
 
 
 def is_expired(path, days_for_expire=30):
+    """ Interface function to return if a file-structure is expired or not. 
+    TODO: Provide implementation for character device files, blocks, sockets. 
+    """
     file_stat = os.stat(path)
 
     if stat.S_ISREG(file_stat.st_mode):
@@ -72,11 +78,7 @@ def is_expired(path, days_for_expire=30):
 
 def get_file_creator(path):
     """
-    Gets the file creators username
-
-    ls -l filepath command on linux returns something like this:
-    -rw-rw-r-- 1 machung machung 4 Feb 17 05:14 /home/machung/test.txt
-    So we select the file owner username from this command output. 
+    Returns the file creators username
 
     string file_path: The absolute path of the file
     """
@@ -99,11 +101,22 @@ def notify_file_creator(file_creator, path):
     
 
 def scan_folder_for_expired(folder_path, days_for_expire=30):
+    """Generator function which iterates the expired top level folders
+    in a given directory"""
     for entry in os.scandir(folder_path):
         if is_expired(entry.path, days_for_expire) :
             yield entry.path 
 
 def delete_expired_files(folder_path, temp_folder, days_for_expire=30):
+    """
+    Interface function which deletes all (top level) expired folders in a 
+    given directory. 
+
+    String folder_path: The folder to clean up
+    String temp_folder: A temporary folder. The code will move all expired files
+    to the temp folder, then delete the temp folder. It does this to avoid race
+    conditions.  
+    """
     if  not os.path.isdir(folder_path) or not os.path.isdir(temp_folder):
         print("Base folder does not exist ")
         return
