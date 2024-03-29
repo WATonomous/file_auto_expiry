@@ -3,7 +3,7 @@ import sys
 
 
 def main(base_folder):
-    delete_expired_files(base_folder,temp_folder, 0)
+    collect_expired_file_information(base_folder, 0)
 
 
 if __name__ == "__main__":
