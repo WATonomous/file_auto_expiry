@@ -209,7 +209,3 @@ def collect_expired_file_information(folder_path, days_for_expire=30):
         
     # notify_file_creators(file_creator_info)
     # delete_files(file_creaotr_info)
-
-    """
-
-    """
