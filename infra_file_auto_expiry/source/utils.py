@@ -180,10 +180,10 @@ def scan_folder_for_expired(folder_path, days_for_expire=30):
         raise Exception("Given path directory "+ folder_path)
     for entry in os.scandir(folder_path):
         expiry_result = is_expired(entry.path, days_for_expire)
-        if expiry_result[0]:
+        
             # path, creator tuple (name, uid, gid), atime, ctime, mtime
-            yield entry.path, expiry_result[1], expiry_result[2], expiry_result[3], 
-            expiry_result[4], 
+        yield entry.path, expiry_result[0], expiry_result[1], expiry_result[2], expiry_result[3],  \
+            expiry_result[4]
 
 def collect_expired_file_information(folder_path, days_for_expire=30):
     """
@@ -195,17 +195,33 @@ def collect_expired_file_information(folder_path, days_for_expire=30):
     if  not os.path.isdir(folder_path):
         print("Base folder does not exist ")
         return
-    file_creator_info = dict()
-    for path, creators, atime, ctime, mtime in scan_folder_for_expired(folder_path, days_for_expire):
+    path_info = dict()
+    for path, is_expired, creators, atime, ctime, mtime in scan_folder_for_expired(folder_path, days_for_expire):
         # handles generating the dictionary
-        for user in creators:
-            if user[1] in file_creator_info:
-                file_creator_info[user[1]]["paths"][path] = [atime, ctime, mtime]
-
-            else:
-                file_creator_info[user[1]] = {"paths": {path: [atime, ctime, mtime]}, 
-                                              "name": user[0],
-                                              "gid": user[2]}
+        path_info[path] = {
+            "creators": [creator for creator in creators],
+            "expired": is_expired,
+            "timestamps": [atime, ctime, mtime]
+        }
         
-    # notify_file_creators(file_creator_info)
-    # delete_files(file_creaotr_info)
+    return path_info
+
+def collect_creator_information(path_info):
+    """
+    Returns a dictionary relating path information to each creator
+    Must be given the return value of form similar to the output of 
+    collect_expired_file_information()
+    """
+    creator_info = dict()
+    for path in path_info:
+        if path_info[path]["expired"]:
+            for user in path_info[path]["creators"]:
+                if user[1] in creator_info:
+                    creator_info[user[1]]["paths"][path] = path_info[path]["timestamps"]
+
+                else:
+                    creator_info[user[1]] = {"paths": {path: path_info[path]["timestamps"]}, 
+                                                "name": user[0],
+                                                "gid": user[2]}
+
+    return creator_info
