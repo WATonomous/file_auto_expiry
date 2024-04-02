@@ -3,8 +3,8 @@ import sys
 
 
 def main(base_folder):
-    collect_expired_file_information(base_folder, 0)
-
+    file_info = collect_expired_file_information(base_folder, 0)
+    creator_info = collect_creator_information(file_info)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
