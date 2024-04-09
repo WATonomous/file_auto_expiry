@@ -5,8 +5,13 @@ import sys
 import time
 from pathlib import Path
 import stat
+import json
+from collections import namedtuple
 
-def is_expired_filepath(path, days_for_expire=30):
+expiry_tuple = namedtuple("file_tuple", "is_expired, creators, atime, ctime, mtime")
+creator_tuple = namedtuple("creator_tuple", "username, uid, gid")
+
+def is_expired_filepath(path, file_stat, current_time,  days_for_expire):
     """
     Checks the last time a file or folder has been accessed. If it has not 
     been accessed in the days specified, then return True. False if otherwise.
@@ -21,7 +26,6 @@ def is_expired_filepath(path, days_for_expire=30):
     output[2], output[3], output[4] return the days since the atime, 
         ctime, and mtime of the file
     """
-    current_time = time.time()
 
     if os.path.islink(path):
         file_stat = os.lstat(path)
@@ -30,17 +34,19 @@ def is_expired_filepath(path, days_for_expire=30):
     creator = get_file_creator(path)
 
     # collect days since last atime, ctime, and mtime of each file 
-    atime = (current_time - (file_stat.st_atime)) / 3600 / 24
-    ctime = (current_time - (file_stat.st_ctime)) / 3600 / 24
-    mtime = (current_time - (file_stat.st_mtime)) / 3600 / 24
-
+    atime = (current_time - (file_stat.st_atime)) 
+    ctime = (current_time - (file_stat.st_ctime)) 
+    mtime = (current_time - (file_stat.st_mtime)) 
+    with open("/home/machung/infra_file_auto_expiry/infra_file_auto_expiry/source/gen.txt", "a") as file:
+        file.write(f"{atime} {days_for_expire} \n")
     # If all atime, ctime, mtime are more than the expiry date limit,
-    # then this return true, along with the other information
-    return ((days_for_expire) < (atime) and
-        (days_for_expire ) < (ctime) and 
-        (days_for_expire) < (mtime)), {creator}, atime, ctime, mtime
+    # then this return true, along with the other information   \
 
-def is_expired_link(path, days_for_expire=30):
+    return expiry_tuple(((days_for_expire) < (atime) and
+        (days_for_expire ) < (ctime) and 
+        (days_for_expire) < (mtime)), {creator}, atime, ctime, mtime)
+
+def is_expired_link(path, file_stat, current_time, days_for_expire):
     """
     Checks if a symlink is expired. Checks the link itself, along with the 
     file it points to. Returns true if both are expired. 
@@ -55,14 +61,17 @@ def is_expired_link(path, days_for_expire=30):
         raise Exception("Given path is not a valid link.")
     
     # Returns true if both the link and the file it points to are expired
-    real_path_information = is_expired_filepath(os.path.realpath(path), days_for_expire)
+    real_path_information = is_expired_filepath(os.path.realpath(path), 
+                                                os.stat(os.path.realpath(path)),
+                                                current_time, 
+                                                days_for_expire)
 
-    return (is_expired_filepath(path, days_for_expire)[0] and \
-        real_path_information[0]), real_path_information [1], real_path_information [2], \
-            real_path_information [3], real_path_information [4], 
+    return expiry_tuple((is_expired_filepath(path, file_stat, days_for_expire).is_expired and \
+        real_path_information.is_expired), real_path_information.creator, real_path_information.atime, \
+            real_path_information.ctime, real_path_information.mtime )
     
 
-def is_expired_folder(folder_path, days_for_expire=30):
+def is_expired_folder(folder_path, current_time, days_for_expire):
     """
     Goes through all files in a folder. Returns true if ALL files in directory 
     are expire. 
@@ -77,61 +86,60 @@ def is_expired_folder(folder_path, days_for_expire=30):
     recent_atime = sys.maxsize
     recent_ctime = sys.maxsize
     recent_mtime = sys.maxsize
+    folder_creator = get_file_creator(folder_path)
+    file_creators.add(folder_creator)
     for e in Path(folder_path).rglob('*'):
         # Tracks the unique names of file creators in the directory
-        file_expiry_information = is_expired(str(e), days_for_expire)
+        component_expiry_information = is_expired(str(e), current_time, days_for_expire)
 
-        if not file_expiry_information[0]: 
+        if not component_expiry_information.is_expired: 
             # First val in the expiry is always the boolean true or false
-            return False, file_creators, recent_atime, recent_ctime, recent_mtime 
-        
-        creator = file_expiry_information[1] # collects tuple of (name, uid, gid)
-
+            return expiry_tuple(False, file_creators, recent_atime, recent_ctime, recent_mtime 
+        )
+        creators = component_expiry_information.creators # collects tuple of (name, uid, gid)
         # If file_expiry_information is from a folder, it should already contain a set
         # with the information of file creators
-        if isinstance(creator, set):
-            for user in creator:
-                if user not in file_creators:
-                    #Adds entire creator tuple
-                    file_creators.add(user)
+    
+        if isinstance(creators, set):
+            for user in creators:
+                file_creators.add(user)
         # if file_expiry_information is from a file, and the creator is not
         # already in the set, then they're information is added. 
         else: 
-            if creator not in file_creators:
-                #Adds entire creator tuple
-                file_creators.add(creator)
+            file_creators.add(creators)
         
         # update atime, ctime, mtime
-        recent_atime = min(recent_atime, file_expiry_information[2])
-        recent_ctime = min(recent_atime, file_expiry_information[3])
-        recent_mtime = min(recent_atime, file_expiry_information[4])
+        recent_atime = min(recent_atime, component_expiry_information.atime)
+        recent_ctime = min(recent_atime, component_expiry_information.ctime)
+        recent_mtime = min(recent_atime, component_expiry_information.mtime)
+    with open("/home/machung/infra_file_auto_expiry/infra_file_auto_expiry/source/gen.txt", "a") as file:
+        file.write(f"{file_creators} \n")
+    return expiry_tuple(True, file_creators, recent_atime, recent_ctime, recent_mtime )
 
-    return True, file_creators, recent_atime, recent_ctime, recent_mtime 
 
-
-def is_expired(path, days_for_expire=30):
+def is_expired(path, current_time, days_for_expire):
     """ Interface function to return if a file-structure is expired or not. 
     TODO: Provide implementation for character device files, blocks, sockets. 
     """
     file_stat = os.stat(path)
 
     if stat.S_ISREG(file_stat.st_mode): # normal file
-        return is_expired_filepath(path, days_for_expire)
+        return is_expired_filepath(path, file_stat, current_time, days_for_expire)
     
     elif stat.S_ISDIR(file_stat.st_mode): # folder
-        return is_expired_folder(path, days_for_expire)
+        return is_expired_folder(path, current_time, days_for_expire)
     
     elif stat.S_ISLNK(file_stat.st_mode): # symlink
-        return is_expired_link(path, days_for_expire)
+        return is_expired_link(path, file_stat, current_time, days_for_expire)
     
     elif stat.S_ISCHR(file_stat.st_mode): # character driver
-        return is_expired_filepath(path, days_for_expire)
+        return is_expired_filepath(path, file_stat, current_time, days_for_expire)
     
     elif stat.S_ISBLK(file_stat.st_mode): # block
-        return is_expired_filepath(path, days_for_expire)
+        return is_expired_filepath(path, file_stat, current_time, days_for_expire)
     
     elif stat.S_ISFIFO(file_stat.st_mode): # pipe
-        return is_expired_filepath(path, days_for_expire)
+        return is_expired_filepath(path, file_stat, current_time, days_for_expire)
 
 
 
@@ -149,7 +157,7 @@ def get_file_creator(path):
     except KeyError:
         """ FIX THIS LATER"""
         return f"user{os.stat(path).st_uid}"
-    return username, os.stat(path).st_uid, os.stat(path).st_gid
+    return creator_tuple(username, os.stat(path).st_uid, os.stat(path).st_gid)
 
 def notify_file_creators(file_creator_info):
     """
@@ -168,7 +176,7 @@ def notify_file_creators(file_creator_info):
     #             file.write(f"   mtime: {timestamps[2]}\n\n")
 
 
-def scan_folder_for_expired(folder_path, days_for_expire=30):
+def scan_folder_for_expired(folder_path, current_time, days_for_expire):
     """Generator function which iterates the expired top level folders
     in a given directory.
     
@@ -179,13 +187,15 @@ def scan_folder_for_expired(folder_path, days_for_expire=30):
     if not os.path.isdir(folder_path) :
         raise Exception("Given path directory "+ folder_path)
     for entry in os.scandir(folder_path):
-        expiry_result = is_expired(entry.path, days_for_expire)
-        
-            # path, creator tuple (name, uid, gid), atime, ctime, mtime
-        yield entry.path, expiry_result[0], expiry_result[1], expiry_result[2], expiry_result[3],  \
-            expiry_result[4]
+        expiry_result = is_expired(entry.path, current_time, days_for_expire)
 
-def collect_expired_file_information(folder_path, days_for_expire=30):
+        # get current folders creator just in case it's empty
+        expiry_result.creators.add(get_file_creator(entry))
+            # path, creator tuple (name, uid, gid), atime, ctime, mtime
+        yield entry.path, expiry_result.is_expired, expiry_result.creators, \
+            expiry_result.atime, expiry_result.ctime, expiry_result.mtime
+
+def collect_expired_file_information(folder_path, current_time, days_for_expire):
     """
     Interface function which collects which directories are 'expired'
 
@@ -196,32 +206,67 @@ def collect_expired_file_information(folder_path, days_for_expire=30):
         print("Base folder does not exist ")
         return
     path_info = dict()
-    for path, is_expired, creators, atime, ctime, mtime in scan_folder_for_expired(folder_path, days_for_expire):
+    for path, is_expired, creators, atime, ctime, mtime in scan_folder_for_expired(folder_path, current_time, days_for_expire):
         # handles generating the dictionary
-        path_info[path] = {
+        path_info[path] = { 
+            "path": path, # storing pathname so we keep it when we transfer the dictionary to jsonl
             "creators": [creator for creator in creators],
             "expired": is_expired,
-            "timestamps": [atime, ctime, mtime]
+            "atime": atime,
+            "ctime": ctime,
+            "mtime": mtime
         }
-        
-    return path_info
+    
+    write_jsonl_information(path_info, "infra_file_auto_expiry/source/data/file_information.jsonl")
 
-def collect_creator_information(path_info):
+    return path_info # infra_file_auto_expiry/source/data/file_information.jsonl
+
+def write_jsonl_information(dict_info, file_path):
+    with open (file_path, "w") as file:
+        for key in dict_info:
+            file.write(json.dumps(dict_info[key]) + "\n") 
+
+
+
+def collect_creator_information(folder_path, current_time, seconds_for_expire, replace_file_information = False):
     """
     Returns a dictionary relating path information to each creator
     Must be given the return value of form similar to the output of 
     collect_expired_file_information()
     """
+    if not os.path.exists("infra_file_auto_expiry/source/data/file_information.jsonl") or \
+            replace_file_information:
+        collect_expired_file_information(folder_path, current_time, seconds_for_expire)
+
     creator_info = dict()
-    for path in path_info:
-        if path_info[path]["expired"]:
-            for user in path_info[path]["creators"]:
-                if user[1] in creator_info:
-                    creator_info[user[1]]["paths"][path] = path_info[path]["timestamps"]
+    with open("infra_file_auto_expiry/source/data/file_information.jsonl", "r+") as file:
+        for line in file:
+            # One jsonl line of path inforamtion
+            path_data = json.loads(line)
+            # check if the path is expired
+            if path_data["expired"]:
+                # take all unique creators and make a new dictionary about them
+                for user in path_data["creators"]:
+                    if user[1] in creator_info:
+                        creator_info[user[1]]["paths"][path_data["path"]] = {
+                            
+                            "atime": path_data["atime"],
+                            "ctime": path_data["ctime"],
+                            "mtime": path_data["mtime"]
+                        }
 
-                else:
-                    creator_info[user[1]] = {"paths": {path: path_info[path]["timestamps"]}, 
-                                                "name": user[0],
-                                                "gid": user[2]}
+                        
+                    else:
+                        creator_info[user[1]] = {"paths": {path_data["path"]: {
+                            "atime": path_data["atime"],
+                            "ctime": path_data["ctime"],
+                            "mtime": path_data["mtime"]
 
+                        }}, 
+                                                    "name": user[0],
+                                                    "uid": user[1],
+                                                    "gid": user[2]}
+        
+    write_jsonl_information(creator_info, "infra_file_auto_expiry/source/data/creator_information.jsonl")
+    #rint(creator_info)
     return creator_info
