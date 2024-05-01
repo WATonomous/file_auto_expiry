@@ -36,8 +36,6 @@ def is_expired_filepath(path, file_stat, current_time,  seconds_for_expiry):
     atime = (file_stat.st_atime) 
     ctime = (file_stat.st_ctime) 
     mtime = (file_stat.st_mtime) 
-    with open("/home/machung/infra_file_auto_expiry/infra_file_auto_expiry/source/gen.txt", "a") as file:
-        file.write(f"{atime} {seconds_for_expiry} \n")
     # If all atime, ctime, mtime are more than the expiry date limit,
     # then this return true, along with the other information   \
     print(f"{current_time - atime} = {seconds_for_expiry}")
@@ -229,7 +227,7 @@ def collect_expired_file_information(folder_path, save_file, current_time, secon
     return save_file 
 
 def write_jsonl_information(dict_info, file_path, current_time):
-    with open (file_path, "w") as file:
+    with open(file_path, "w") as file:
         file.write(json.dumps({"scrape_time:": current_time,
                                "scrape_time_datetime": str(datetime.datetime.fromtimestamp(current_time))}) + "\n")
         for key in dict_info:
