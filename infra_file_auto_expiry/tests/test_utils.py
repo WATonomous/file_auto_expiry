@@ -54,16 +54,16 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(5 * 24 * 3600, expiry_test_result[4])
     
     @patch('os.stat')
-    @patch('os.path.islink')
+    @patch('os.path')
     @patch("source.utils.is_expired_filepath")
-    def test_is_expired_link(self, patch_expired, patch_link, patch_os):
+    def test_is_expired_link(self, patch_expired, patch_path, patch_stat):
         """
         Tests the is_expired_link function. This returns True (is expired) when
         both the link and the true path it points to are both expired. It returns
         False if both or either is NOT expired. 
         """
-        patch_link.return_value = True
-
+        patch_path.is_link.return_value = True
+        patch_path.realpath.return_value = 0
         mocked_file_expiry_results_1 = MagicMock()
         mocked_file_expiry_results_2 = MagicMock()
 
@@ -78,7 +78,7 @@ class TestUtils(unittest.TestCase):
                                      mocked_file_expiry_results_2]
         
         # Either Link or True path is not expired: Should return False, not expired
-        res = is_expired_link("test_path", patch_os, 0, 0)
+        res = is_expired_link("test_path", patch_stat, 0, 0)
         self.assertFalse(res[0])
 
         mocked_file_expiry_results_2.configure_mock(is_expired = True, creators = (),
@@ -87,7 +87,7 @@ class TestUtils(unittest.TestCase):
                                      mocked_file_expiry_results_2]
         
         # Either Link or True path is not expired: Should return False, not expired
-        res = is_expired_link("test_path", patch_os, 0, 0)
+        res = is_expired_link("test_path", patch_stat, 0, 0)
         self.assertTrue(res[0])
 
     @patch('pathlib.Path.rglob')
@@ -127,7 +127,6 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(False, res[0])
         self.assertEqual(3000 , res[2])
         self.assertEqual(6000 , res[3])
-        print(res)
         self.assertEqual(10000 , res[4])
 
 if __name__ == '__main__':
