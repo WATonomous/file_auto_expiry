@@ -37,8 +37,7 @@ def is_expired_filepath(path, file_stat, current_time,  seconds_for_expiry):
     ctime = (file_stat.st_ctime) 
     mtime = (file_stat.st_mtime) 
     # If all atime, ctime, mtime are more than the expiry date limit,
-    # then this return true, along with the other information   \
-    print(f"{current_time - atime} = {seconds_for_expiry}")
+    # then this return true, along with the other information  
     return expiry_tuple((current_time - atime > seconds_for_expiry) and
         (current_time - ctime > seconds_for_expiry) and 
         (current_time - mtime > seconds_for_expiry), {creator}, atime, ctime, mtime)
@@ -83,8 +82,8 @@ def is_expired_folder(folder_path, folder_stat, current_time, seconds_for_expiry
 
     # timestamps for the folder itself 
     recent_atime = folder_stat.st_atime
-    recent_ctime = folder_stat.st_atime
-    recent_mtime = folder_stat.st_atime
+    recent_ctime = folder_stat.st_ctime
+    recent_mtime = folder_stat.st_mtime
     folder_creator = get_file_creator(folder_path)
     file_creators.add(folder_creator)
     is_expired_flag = True
@@ -105,8 +104,6 @@ def is_expired_folder(folder_path, folder_stat, current_time, seconds_for_expiry
         creators = file_expiry_information.creators # collects tuple of (name, uid, gid)
         # If file_expiry_information is from a folder, it should already contain a set
         # with the information of file creators
-        print( file_expiry_information.ctime )
-        print("AJAJAJAJAJj")
         if isinstance(creators, set):
             for user in creators:
                 file_creators.add(user)
@@ -117,8 +114,8 @@ def is_expired_folder(folder_path, folder_stat, current_time, seconds_for_expiry
         
         # update atime, ctime, mtime
         recent_atime = max(recent_atime, file_expiry_information.atime)
-        recent_ctime = max(recent_atime, file_expiry_information.ctime)
-        recent_mtime = max(recent_atime, file_expiry_information.mtime)
+        recent_ctime = max(recent_ctime, file_expiry_information.ctime)
+        recent_mtime = max(recent_mtime, file_expiry_information.mtime)
     
     
     return expiry_tuple(is_expired_flag, file_creators, recent_atime, recent_ctime, recent_mtime )
@@ -166,7 +163,7 @@ def get_file_creator(path):
         return f"user{os.stat(path).st_uid}"
     return creator_tuple(username, os.stat(path).st_uid, os.stat(path).st_gid)
 
-def notify_file_creators(file_creator_info):
+def notify_file_creators():
     """
     TODO: implement proper notification system
     Currently is just the code to print information to a text file
@@ -186,8 +183,6 @@ def scan_folder_for_expired(folder_path, current_time, seconds_for_expiry):
         expiry_result = is_expired(entry.path, current_time, seconds_for_expiry)
         
         # path, creator tuple (name, uid, gid), atime, ctime, mtime
-        print(entry.path)
-        print(expiry_result.is_expired)
         yield entry.path, expiry_result.is_expired, expiry_result.creators, \
                 expiry_result.atime, expiry_result.ctime, expiry_result.mtime
 
@@ -200,7 +195,7 @@ def collect_expired_file_information(folder_path, save_file, current_time, secon
     int seconds_for_expiry: The amount of days since last usage that indicates expiry
     """
     if not os.path.isdir(folder_path):
-        print("Base folder does not exist ")
+        raise Exception("Base folder does not exist")
         return
     
     if not save_file:
