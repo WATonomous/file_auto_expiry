@@ -6,26 +6,9 @@ This project is meant to help automatically expire and delete files. It's curren
 
 Currently it moves through every single top level folder in a directory, and checks whether it is expired or not. This means that every single file in that directory tree must be expired. As it does this, it gathers all the users who created files in that directory, and the days since the most RECENT atime, ctime, and mtime of ANY file in that directory. It only collects these for folders which have been confirmed to be expired.
 
-This is placed into a dictionary similar to below:
+To collect the expiry information of all top level directories in a given path:
+sudo $(which python3)  /path_to_directory/infra_file_auto_expiry/infra_file_auto_expiry/source/main.py collect-file-info path_to_check_expiry_of
 
-    all_creators: {
-        uid1: {
-            "name": "username1"    
-            "gid": usergid
-            "paths":{
-                "path1": [atime, ctime, mtime],
-                "path2": [atime, ctime, mtime],
-                "path3": [atime, ctime, mtime],
-            }
-        }
-        uid2: {
-            "name": "username2"    
-            "gid": usergid
-            "paths":{
-                "path1": [atime, ctime, mtime]
-            }
-        }
-    }
+This will return a jsonl file. You can then use this in the following command to tabulate all expired paths that are associated with a particular user. 
 
-
-This can be used by falling the file_expiry.sh bash script. Currently, it will not actually have an output, but you may see the output by modifying the "notify_file_creators" function and adding the name of a text file into that block. 
+sudo $(which python3)  /path_to_directory/infra_file_auto_expiry/infra_file_auto_expiry/source/main.py collect-creator-info path_to_jsonl_file
