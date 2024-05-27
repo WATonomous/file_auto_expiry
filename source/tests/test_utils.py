@@ -32,24 +32,25 @@ class TestUtils(unittest.TestCase):
         """
         Tests the is_expired_file function
         """
-        seconds_for_expiry = 30 * 24 * 60 * 60 # 30 days
-        patch_stat.st_atime = 5 * 24 * 60 * 60 # 5 days
-        patch_stat.st_ctime = 5 * 24 * 60 * 60 # 5 days
-        patch_stat.st_mtime = 5 * 24 * 60 * 60 # 5 days
-        scrape_time = 50 * 24 * 60 * 60  # 50 days
+        time_for_expiry = 30 # 30 days
+        patch_stat.st_atime = 5 # 5 days
+        patch_stat.st_ctime = 5 # 5 days
+        patch_stat.st_mtime = 5 # 5 days
+        scrape_time = 50  # 50 days
+        expiry_threshold = scrape_time - time_for_expiry
 
-        # Days since last access is 50 - 5 = 45 > 30
+        # Days since last access is 5 < 20
         # The file should be expired
-        self.assertTrue(is_expired_filepath("test_name.txt", patch_stat, scrape_time, seconds_for_expiry)[0])
+        self.assertTrue(is_expired_filepath("test_name.txt", patch_stat, expiry_threshold)[0])
 
-        scrape_time = 10 * 24 * 60 * 60  # change to 10 days
-        # Days since last access is 10 - 5 = 5 < 30
+        expiry_threshold = -20  # change to 10 days
+        # Days since last access is 5 > -20
         # The file should not be expired
-        expiry_test_result =  is_expired_filepath("test_name.txt", patch_stat, scrape_time, seconds_for_expiry)
+        expiry_test_result =  is_expired_filepath("test_name.txt", patch_stat, expiry_threshold)
         self.assertFalse(expiry_test_result[0])
-        self.assertTrue(5 * 24 * 3600, expiry_test_result[2])
-        self.assertTrue(5 * 24 * 3600, expiry_test_result[3])
-        self.assertTrue(5 * 24 * 3600, expiry_test_result[4])
+        self.assertTrue(5, expiry_test_result[2])
+        self.assertTrue(5, expiry_test_result[3])
+        self.assertTrue(5, expiry_test_result[4])
 
     @patch('os.listdir')
     @patch("os.stat")
@@ -83,7 +84,7 @@ class TestUtils(unittest.TestCase):
         # atime, ctime, mtime for the folder itself is 5 days for all
         patch_stat.st_atime = patch_stat.st_ctime = patch_stat.st_mtime = 3000
 
-        res = is_expired_folder("test_path", patch_stat, 0, 0)
+        res = is_expired_folder("test_path", patch_stat, 0)
         self.assertEqual(False, res[0])
         self.assertEqual(3000 , res[2])
         self.assertEqual(6000 , res[3])
