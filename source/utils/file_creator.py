@@ -17,9 +17,3 @@ def get_file_creator(path):
         """ FIX THIS LATER"""
         return f"user{os.stat(path).st_uid}"
     return creator_tuple(username, os.stat(path).st_uid, os.stat(path).st_gid)
-
-def notify_file_creators():
-    """
-    TODO: implement proper notification system
-    Currently is just the code to print information to a text file
-    """
