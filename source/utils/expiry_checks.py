@@ -1,7 +1,7 @@
 import os
 import stat
 from data.expiry_constants import *
-from data.expiry_constants import KNOWN_DIRECTORIES
+from data.expiry_constants import DIRECTORIES_TO_IGNORE
 from data.tuples import *
 from utils.file_creator import *
 
@@ -147,7 +147,7 @@ def check_folder_if_known(path):
     """
     base_name = os.path.basename(path)
     parent_path_name = os.path.basename(os.path.dirname(path))
-    if f"{parent_path_name}/{base_name}" in KNOWN_DIRECTORIES:
+    if f"{parent_path_name}/{base_name}" in DIRECTORIES_TO_IGNORE:
         return True
     
 def catch_link_issues(path):
