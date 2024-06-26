@@ -43,7 +43,6 @@ def scan_folder_for_expired(folder_path, expiry_threshold):
     for entry in os.scandir(folder_path):
         if os.path.exists(entry.path):
             expiry_result = is_expired(entry.path, expiry_threshold)
-            print(entry.path)
             # path, creator tuple (name, uid, gid), atime, ctime, mtime
             yield entry.path, expiry_result.is_expired, expiry_result.creators, \
                 expiry_result.atime, expiry_result.ctime, expiry_result.mtime
@@ -90,7 +89,7 @@ def write_jsonl_information(dict_info, file_path, scrape_time):
         file.write(json.dumps({"scrape_time:": scrape_time,
                                "scrape_time_datetime": str(datetime.datetime.fromtimestamp(scrape_time))}) + "\n")
         file.write(json.dumps({"time_for_scrape_sec": current_time - scrape_time,
-                               "time_for_scrape_min": (current_time - scrape_time) / 60}))
+                               "time_for_scrape_min": (current_time - scrape_time) / 60}) + "\n")
         
         for key in dict_info:
             file.write(json.dumps(dict_info[key]) + "\n") 
