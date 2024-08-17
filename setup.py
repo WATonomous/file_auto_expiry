@@ -6,7 +6,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
-    name="wato_file_auto_expiry", 
+    name="file_auto_expiry", 
     version="0.0.1", 
     description="WATCloud project containing scripts to check if directories / files are expired",  # Optional
 
@@ -16,8 +16,8 @@ setup(
         "Topic :: Software Development :: Build Tools",
         "Programming Language :: Python :: 3",
     ],
-    package_dir={"": "source"},  
-    packages=find_packages(where="source"), 
+    package_dir={"": "src"},  
+    packages=find_packages(where="src"), 
    
     python_requires=">=3.7, <4",
     extras_require={ 
