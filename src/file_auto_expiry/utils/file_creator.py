@@ -1,6 +1,6 @@
 import os
 import pwd
-from data.tuples import *
+from ..data.tuples import *
 
 def get_file_creator(path):
     """

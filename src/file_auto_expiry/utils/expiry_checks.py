@@ -1,9 +1,10 @@
 import os
 import stat
-from data.expiry_constants import *
-from data.expiry_constants import DIRECTORIES_TO_IGNORE
-from data.tuples import *
-from utils.file_creator import *
+from ..data.expiry_constants import *
+from ..data.expiry_constants import DIRECTORIES_TO_IGNORE
+from ..data.tuples import *
+from .file_creator import *
+
 
 def is_expired(path, expiry_threshold):
     """ Interface function to return if a file-structure is expired or not. 

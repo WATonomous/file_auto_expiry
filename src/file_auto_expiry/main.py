@@ -1,5 +1,5 @@
-from utils.interface import *
-from data.expiry_constants import SECS_PER_DAY
+from .utils.interface import *
+from .data.expiry_constants import SECS_PER_DAY
 import time
 import typer
 app = typer.Typer()
