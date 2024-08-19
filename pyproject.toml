@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "file_auto_expiry"
+version = "0.0.1"
+description = "WATCloud project containing scripts to check if directories / files are expired"
+readme = "README.md"
+requires-python = ">=3.7, <4"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+]
+
+# Packages configuration
+[tool.setuptools]
+packages = ["file_auto_expiry"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = ["check-manifest"]
+test = ["coverage"]
