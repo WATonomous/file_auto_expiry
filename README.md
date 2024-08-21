@@ -21,6 +21,7 @@ sudo $(which python3)  /path_to_directory/infra_file_auto_expiry/infra_file_auto
 Required flags:
     folder_path : STRING | Path to folder to check expiry of
 Optional flags:
+    --save-file="" : SRING | A path to a jsonl file to save the collected information to. If this is undefined, then the program will just generate a filename and save it to the working directory. 
     --days-for-expiry=x : INT | The amount of days of non-usage that indicates any file is expired. 
 
 This will return a jsonl file of the following form. After the first two dictionary type objects, each dictionary contains the information of ONE top level folder inside of the folder_path flag. AKA. This program reports information by iterating through the top level folders, but checks expiry by entering recursively through each of those folders.  Essentially, each dictionary is associated with a PATH, and all creators who are associated with said path.  
