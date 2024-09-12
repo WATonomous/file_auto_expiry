@@ -120,7 +120,7 @@ def is_expired_folder(folder_path, folder_stat, expiry_threshold):
 
         if file_expiry_information.is_expired: 
             # First val in the expiry is always the boolean true or false
-            is_expired_flag = False
+            is_expired_flag = True
 
         creators = file_expiry_information.creators # collects tuple of (name, uid, gid)
         # If file_expiry_information is from a folder, it should already contain a set
