@@ -52,20 +52,19 @@ def is_expired_filepath(path, file_stat, expiry_threshold):
     # If all atime, ctime, mtime are more than the expiry date limit,
     # then this return true, along with the other information  
     return expiry_tuple(
-        is_expired=timestamps_are_expired(atime, ctime, mtime, 
+        is_expired=timestamps_are_expired(ctime, mtime, 
                                           expiry_threshold),
         creators={creator}, 
         atime=atime, 
         ctime=ctime, 
         mtime=mtime)
 
-def timestamps_are_expired(atime, ctime, mtime, expiry_threshold):
+def timestamps_are_expired(ctime, mtime, expiry_threshold):
     """
     Checks if all atime, ctime, and mtime are expired. 
     Returns True when all are expired. 
     """
-    return ((atime < expiry_threshold) and 
-            (ctime < expiry_threshold) and 
+    return ((ctime < expiry_threshold) and 
             (mtime < expiry_threshold))
 
 def is_expired_link(path, file_stat, expiry_threshold):
@@ -98,8 +97,7 @@ def is_expired_folder(folder_path, folder_stat, expiry_threshold):
     recent_mtime = folder_stat.st_mtime
     folder_creator = get_file_creator(folder_path)
     file_creators.add(folder_creator)
-    is_expired_flag = timestamps_are_expired(recent_atime, 
-                                             recent_ctime, 
+    is_expired_flag = timestamps_are_expired(recent_ctime, 
                                              recent_mtime, 
                                              expiry_threshold)
 
