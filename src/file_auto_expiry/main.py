@@ -13,6 +13,8 @@ def collect_file_info(path: str, save_file: str = "", days_for_expiry: int = 10)
     scrape_time = time.time()
     seconds_for_expiry = int(days_for_expiry) * SECS_PER_DAY
     expiry_threshold = scrape_time - seconds_for_expiry
+    print(seconds_for_expiry)
+    print(expiry_threshold)
     collect_expired_file_information(folder_path=path, 
                                      save_file=save_file, 
                                      scrape_time=scrape_time, 
