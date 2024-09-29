@@ -139,4 +139,4 @@ def collect_creator_information(path_info_file, save_file, scrape_time):
                             "uid": user[1],
                             "gid": user[2]}
         
-    write_jsonl_information(creator_info, save_file, scrape_time, expiry_threshold)
+    write_jsonl_information(creator_info, save_file, scrape_time, "")
