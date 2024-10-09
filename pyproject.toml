@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "file_auto_expiry"
-version = "0.0.2"
+version = "0.0.3"
 description = "WATCloud project containing scripts to check if directories / files are expired"
 readme = "README.md"
 requires-python = ">=3.7, <4"
